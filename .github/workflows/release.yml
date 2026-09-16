@@ -2,14 +2,18 @@ name: Release Obsidian plugin
 
 on:
   push:
+    branches:
+      - main
     tags:
       - "*"
+  workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
   release:
+    if: github.ref_type == 'tag' || github.event_name == 'workflow_dispatch' || startsWith(github.event.head_commit.message, 'release:')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -17,10 +21,24 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - name: Resolve release version
+        id: version
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            version="$GITHUB_REF_NAME"
+          else
+            version="$(node -p "require('./manifest.json').version")"
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
       - run: npm ci
       - run: npm run check
       - uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.version.outputs.version }}
+          name: ${{ steps.version.outputs.version }}
+          generate_release_notes: true
+          make_latest: true
           files: |
             main.js
             manifest.json

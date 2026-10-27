@@ -2,6 +2,7 @@ import { Notice, PluginSettingTab, Setting } from "obsidian";
 import type YandexDiskSyncPlugin from "./main";
 import { validateRemotePath } from "./utils";
 import { YandexDiskClient } from "./yandex-client";
+import { createProgressView, normalizeProgressStyle } from "./progress-view";
 
 export class YandexDiskSyncSettingTab extends PluginSettingTab {
   constructor(private readonly plugin: YandexDiskSyncPlugin) {
@@ -62,45 +63,32 @@ export class YandexDiskSyncSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName("Автосинхронизация после паузы")
-      .setDesc("Задержка после последнего локального изменения, от 2 до 300 секунд.")
-      .addText((text) =>
-        text
-          .setValue(String(this.plugin.settings.debounceSeconds))
+      .setName("Режим синхронизации")
+      .setDesc("Вручную — только по кнопке. По расписанию — через заданный интервал. Уже начатая синхронизация завершится при смене режима.")
+      .addDropdown((dropdown) =>
+        dropdown
+          .addOption("manual", "Вручную")
+          .addOption("scheduled", "По расписанию")
+          .setValue(this.plugin.settings.syncMode)
           .onChange(async (value) => {
-            const seconds = Number(value);
-            if (Number.isFinite(seconds) && seconds >= 2 && seconds <= 300) {
-              this.plugin.settings.debounceSeconds = seconds;
-              await this.plugin.savePluginData();
-            }
+            await this.plugin.setSyncMode(value === "scheduled" ? "scheduled" : "manual");
+            this.display();
           })
       );
 
-    new Setting(containerEl)
-      .setName("Проверять облако каждые N минут")
-      .setDesc("0 отключает периодическую проверку. Рекомендуемое значение — 5 минут.")
+    if (this.plugin.settings.syncMode === "scheduled") new Setting(containerEl)
+      .setName("Интервал синхронизации, минут")
+      .setDesc("От 1 до 1440 минут. Первый запуск — через этот интервал; следующие — после такой же паузы от завершения предыдущего. Кнопка доступна всегда.")
       .addText((text) =>
         text
           .setValue(String(this.plugin.settings.syncIntervalMinutes))
           .onChange(async (value) => {
             const minutes = Number(value);
-            if (Number.isFinite(minutes) && minutes >= 0 && minutes <= 1440) {
+            if (Number.isInteger(minutes) && minutes >= 1 && minutes <= 1440) {
               this.plugin.settings.syncIntervalMinutes = minutes;
               this.plugin.configurePeriodicSync();
               await this.plugin.savePluginData();
             }
-          })
-      );
-
-    new Setting(containerEl)
-      .setName("Синхронизация при открытии")
-      .setDesc("Получать изменения из облака сразу после запуска Obsidian.")
-      .addToggle((toggle) =>
-        toggle
-          .setValue(this.plugin.settings.syncOnStartup)
-          .onChange(async (value) => {
-            this.plugin.settings.syncOnStartup = value;
-            await this.plugin.savePluginData();
           })
       );
 
@@ -115,6 +103,35 @@ export class YandexDiskSyncSettingTab extends PluginSettingTab {
             await this.plugin.savePluginData();
           })
       );
+
+    const progressStyleSetting = new Setting(containerEl)
+      .setName("Вид прогресса")
+      .setDesc("Выбери оформление уведомления о синхронизации. Ниже показан пример.");
+    const preview = document.createElement("div");
+    preview.className = "yandex-sync-preview";
+    const updatePreview = (): void => {
+      preview.replaceChildren(createProgressView({
+        phase: "sync",
+        completed: 21,
+        total: 50,
+        currentPath: "Заметки/Пример.md",
+        stats: { uploaded: 0, downloaded: 0, deletedLocal: 0, deletedRemote: 0, conflicts: 0, unchanged: 0, failed: 0 }
+      }, this.plugin.settings.progressStyle));
+    };
+    progressStyleSetting.addDropdown((dropdown) => {
+      dropdown
+        .addOption("bar", "Полоска и проценты")
+        .addOption("text", "Только текст")
+        .addOption("circle", "Круговой индикатор")
+        .setValue(this.plugin.settings.progressStyle)
+        .onChange(async (value) => {
+          const save = this.plugin.setProgressStyle(normalizeProgressStyle(value));
+          updatePreview();
+          await save;
+        });
+    });
+    updatePreview();
+    containerEl.append(preview);
 
     new Setting(containerEl)
       .setName("Исключённые папки")

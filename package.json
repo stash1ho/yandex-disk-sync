@@ -1,13 +1,14 @@
 {
   "name": "yandex-disk-sync",
-  "version": "0.2.0",
+  "version": "0.2.2",
   "description": "Fast and safe two-way Obsidian synchronization through the Yandex Disk REST API.",
   "main": "main.js",
   "scripts": {
     "build": "node esbuild.config.mjs production",
     "dev": "node esbuild.config.mjs",
     "typecheck": "tsc --noEmit",
-    "check": "npm run typecheck && npm run build"
+    "test": "node tests/sync-modes.test.cjs",
+    "check": "npm run typecheck && npm test && npm run build"
   },
   "keywords": [
     "obsidian",

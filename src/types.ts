@@ -1,13 +1,16 @@
 import type { TFile } from "obsidian";
 
+export type ProgressStyle = "bar" | "text" | "circle";
+export type SyncMode = "manual" | "scheduled";
+
 export interface PluginSettings {
   oauthToken: string;
   remoteRoot: string;
-  debounceSeconds: number;
-  syncOnStartup: boolean;
+  syncMode: SyncMode;
   syncIntervalMinutes: number;
   concurrency: number;
   showProgressNotice: boolean;
+  progressStyle: ProgressStyle;
   excludePrefixes: string[];
 }
 

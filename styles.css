@@ -1,8 +1,108 @@
 .yandex-sync-progress {
+  display: block;
   width: 100%;
-  height: 6px;
-  margin-top: 8px;
+  min-width: 0;
+  height: 8px;
+  margin: 0;
   accent-color: var(--interactive-accent);
+}
+
+.yandex-sync-notice {
+  width: 280px;
+  max-width: 100%;
+  text-align: start;
+  white-space: normal;
+}
+
+.yandex-sync-title {
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.yandex-sync-body {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.yandex-sync-notice--bar .yandex-sync-body {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.yandex-sync-notice--bar .yandex-sync-counter {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.yandex-sync-percent {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.yandex-sync-detail,
+.yandex-sync-path {
+  font-size: 0.9em;
+  opacity: 0.8;
+}
+
+.yandex-sync-path {
+  margin-top: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.yandex-sync-ring {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+}
+
+.yandex-sync-ring svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.yandex-sync-ring circle {
+  fill: none;
+  stroke-width: 4;
+}
+
+.yandex-sync-ring-track {
+  stroke: currentColor;
+  opacity: 0.15;
+}
+
+.yandex-sync-ring-fill {
+  stroke: var(--interactive-accent);
+  stroke-linecap: round;
+}
+
+.yandex-sync-ring.is-indeterminate svg {
+  animation: yandex-sync-spin 1.2s linear infinite;
+}
+
+@keyframes yandex-sync-spin {
+  to { transform: rotate(270deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .yandex-sync-ring.is-indeterminate svg { animation: none; }
+}
+
+.yandex-sync-preview {
+  margin: 0 0 20px;
+  padding: 12px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m, 8px);
+  background: var(--background-secondary);
 }
 
 .yandex-sync-setting-textarea {
